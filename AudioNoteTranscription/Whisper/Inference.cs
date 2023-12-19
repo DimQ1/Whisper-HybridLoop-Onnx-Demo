@@ -197,7 +197,7 @@ namespace AudioNoteTranscription.Whisper
 
             using var session = new InferenceSession(config.WhisperOnnxPath, sessionOptions);
 
-            return Run(config, pcmAudioData, runOptions, session);
+            return RunTest(config, pcmAudioData, runOptions, session);
         }
 
         public string RunRealtime(WhisperConfig config)
@@ -362,6 +362,30 @@ namespace AudioNoteTranscription.Whisper
             }
 
             return stringBuilder.ToString();
+        }
+
+        public string RunTest(WhisperConfig config, float[] pcmAudioData, RunOptions runOptions, InferenceSession session)
+        {
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
+            StringBuilder stringBuilder = new();
+            foreach (var audio in pcmAudioData.Chunk(480000))
+            {
+                
+                var input = CreateOnnxWhisperModelInput(config, audio);
+                var result = session.Run(input, ["str"], runOptions);
+
+                stringBuilder.Append((result.FirstOrDefault()?.Value as IEnumerable<string>)?.First() ?? string.Empty);
+
+            }
+
+            sw.Stop();
+
+            var elapsetMilliseconds =$" ElapsedMilliseconds {sw.ElapsedMilliseconds}";
+
+            return stringBuilder.ToString() + elapsetMilliseconds;
         }
 
         public static float[] LoadAndProcessAudioFile(string file, int sampleRate)
