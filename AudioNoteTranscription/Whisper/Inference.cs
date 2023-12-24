@@ -173,7 +173,7 @@ namespace AudioNoteTranscription.Whisper
                 inputParameters = [
                     50258,
                     language,
-                    50358,  //translate
+                    //50358,  //translate
                     50359,  //transcribe
                     //50363,  //notimestamps
                     //50364,     //<|0.00|>
