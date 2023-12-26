@@ -181,7 +181,7 @@ namespace AudioNoteTranscription.Whisper
             }
 
             input.Add(NamedOnnxValue.CreateFromTensor("decoder_input_ids", new DenseTensor<int>(inputParameters, new int[] { 1, inputParameters.Length })));
-            input.Add(NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length + inputParameters.Length }, new int[] { 1 })));
+            input.Add(NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, new int[] { 1 })));
 
             return input;
         }
