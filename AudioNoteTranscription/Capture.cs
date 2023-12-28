@@ -18,7 +18,8 @@ namespace AudioNoteTranscription
 
         private WasapiCapture wasapiLoopbackСapture;
 
-        private BufferedWaveProvider? bufferedWaveProvider;
+        private BufferedWaveProvider? bufferedLoopbackWaveProvider;
+        private BufferedWaveProvider? bufferedMicWaveProvider;
 
         private bool inProgress = false;
         private WaveInEvent waveSourceMic;
@@ -28,19 +29,35 @@ namespace AudioNoteTranscription
         public Capture()
         {
             wasapiLoopbackСapture = InitWasapiLoopbackCapture();
-            //InitWaveIn(); //init mic if neccessary
+            InitWaveIn(); //init mic if neccessary
         }
 
         public void Start()
         {
-            wasapiLoopbackСapture.StartRecording();
-            waveSourceMic?.StartRecording();
-
-            // устанавливаем метод обратного вызова
             // создаем таймер
             this.timer = new Timer(TimeSpan.FromSeconds(1));
             timer.Elapsed += OnAudioData;
             timer.Start();
+        }
+
+        public void StartLoopback()
+        {
+            wasapiLoopbackСapture?.StartRecording();
+        }
+
+        public void StopLoopback()
+        {
+            wasapiLoopbackСapture.StopRecording();
+        }
+
+        public void StartMic()
+        {
+            waveSourceMic?.StartRecording();
+        }
+
+        public void StopMic()
+        {
+            waveSourceMic?.StopRecording();
         }
 
 
@@ -48,36 +65,28 @@ namespace AudioNoteTranscription
         {
             this.waveSourceMic = new WaveInEvent();
             waveSourceMic.WaveFormat = wasapiLoopbackСapture.WaveFormat;
-            InitWaveInCaptuer(waveSourceMic);
+            InitMicAudioBuffer(waveSourceMic);
+            InitWaveInCapture(waveSourceMic);
 
             return this.waveSourceMic;
-        }
-
-        private WasapiCapture InitWasapiCapture()
-        {
-
-            wasapiLoopbackСapture = new WasapiCapture();
-            InitCaptuer(wasapiLoopbackСapture);
-
-            return wasapiLoopbackСapture;
         }
 
         private WasapiCapture InitWasapiLoopbackCapture()
         {
             wasapiLoopbackСapture = new WasapiLoopbackCapture();
 
-            InitCaptuer(wasapiLoopbackСapture);
+            InitCapture(wasapiLoopbackСapture);
 
             return wasapiLoopbackСapture;
         }
 
-        private void InitCaptuer(WasapiCapture capture)
+        private void InitCapture(WasapiCapture capture)
         {
-            InitAudioBuffer(capture);
+            InitLoopbackAudioBuffer(capture);
 
             capture.DataAvailable += delegate (object? s, WaveInEventArgs a)
             {
-                bufferedWaveProvider.AddSamples(a.Buffer, 0, a.BytesRecorded);
+                bufferedLoopbackWaveProvider.AddSamples(a.Buffer, 0, a.BytesRecorded);
             };
 
             capture.RecordingStopped += delegate
@@ -86,19 +95,27 @@ namespace AudioNoteTranscription
             };
         }
 
-        private void InitAudioBuffer(WasapiCapture capture)
+        private void InitLoopbackAudioBuffer(WasapiCapture capture)
         {
-            bufferedWaveProvider = new BufferedWaveProvider(capture.WaveFormat);
-            bufferedWaveProvider.DiscardOnBufferOverflow = true;
-            bufferedWaveProvider.ReadFully = false;
-            bufferedWaveProvider.BufferDuration = TimeSpan.FromSeconds(60);
+            bufferedLoopbackWaveProvider = new BufferedWaveProvider(capture.WaveFormat);
+            bufferedLoopbackWaveProvider.DiscardOnBufferOverflow = true;
+            bufferedLoopbackWaveProvider.ReadFully = false;
+            bufferedLoopbackWaveProvider.BufferDuration = TimeSpan.FromSeconds(60);
         }
 
-        private void InitWaveInCaptuer(WaveInEvent capture)
+        private void InitMicAudioBuffer(WaveInEvent capture)
+        {
+            bufferedMicWaveProvider = new BufferedWaveProvider(capture.WaveFormat);
+            bufferedMicWaveProvider.DiscardOnBufferOverflow = true;
+            bufferedMicWaveProvider.ReadFully = false;
+            bufferedMicWaveProvider.BufferDuration = TimeSpan.FromSeconds(60);
+        }
+
+        private void InitWaveInCapture(WaveInEvent capture)
         {
             capture.DataAvailable += delegate (object? s, WaveInEventArgs a)
             {
-                bufferedWaveProvider.AddSamples(a.Buffer, 0, a.BytesRecorded);
+                bufferedMicWaveProvider.AddSamples(a.Buffer, 0, a.BytesRecorded);
             };
 
             capture.RecordingStopped += delegate
@@ -110,12 +127,18 @@ namespace AudioNoteTranscription
         private void OnAudioData(object? sender, ElapsedEventArgs e)
         {
 
-            if (!inProgress && bufferedWaveProvider.BufferedDuration > TimeSpan.FromSeconds(1))
+            if (!inProgress && (bufferedLoopbackWaveProvider?.BufferedDuration > TimeSpan.FromSeconds(1) || bufferedMicWaveProvider?.BufferedDuration > TimeSpan.FromSeconds(1)))
             {
                 inProgress = true;
-                var bufferedTime = bufferedWaveProvider.BufferedDuration;
+                var bufferedLoopBackTime = bufferedLoopbackWaveProvider?.BufferedDuration ?? TimeSpan.Zero;
+                var bufferedMicTime = bufferedMicWaveProvider?.BufferedDuration ?? TimeSpan.Zero;
 
-                var waveFormat = new WdlResamplingSampleProvider(bufferedWaveProvider.ToSampleProvider(), 16000).ToMono();
+                var bufferedTime = bufferedLoopBackTime > bufferedMicTime ? bufferedLoopBackTime : bufferedMicTime;
+
+                var mixer = new MixingSampleProvider(new[] { bufferedLoopbackWaveProvider.ToSampleProvider(), bufferedMicWaveProvider.ToSampleProvider() });
+
+                var waveFormat = new WdlResamplingSampleProvider(mixer.ToMono(), 16000);
+
 
                 var bufferedFrames = TimeSpanToSamples(bufferedTime, waveFormat.WaveFormat);
 
@@ -148,7 +171,11 @@ namespace AudioNoteTranscription
                     timer.Dispose();
                     wasapiLoopbackСapture.StopRecording();
                     wasapiLoopbackСapture?.Dispose();
-                    bufferedWaveProvider?.ClearBuffer();
+                    bufferedLoopbackWaveProvider?.ClearBuffer();
+
+                    waveSourceMic?.StopRecording();
+                    waveSourceMic?.Dispose();
+                    bufferedMicWaveProvider?.ClearBuffer();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
