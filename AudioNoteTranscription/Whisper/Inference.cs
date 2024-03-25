@@ -152,7 +152,7 @@ namespace AudioNoteTranscription.Whisper
 
         private string fullText = string.Empty;
 
-        public List<NamedOnnxValue> CreateOnnxWhisperModelInput(WhisperConfig config, Memory<float> audio)
+        public List<NamedOnnxValue> CreateOnnxWhisperModelInput(WhisperConfig config, Memory<float> audio, IReadOnlyList<string> inputNames)
         {
             // Create a new DenseTensor with the desired shape
 
@@ -161,15 +161,21 @@ namespace AudioNoteTranscription.Whisper
             var modelConfig = config.ModelConfig.config.model_attributes;
 
             var input = new List<NamedOnnxValue> {
-                NamedOnnxValue.CreateFromTensor("audio_pcm", new DenseTensor<float>(audio, new[] { 1, audio.Length })),
-                NamedOnnxValue.CreateFromTensor("min_length", new DenseTensor<int>(new int[] { modelConfig.min_length }, new int[] { 1 })),
+                NamedOnnxValue.CreateFromTensor("audio_pcm", new DenseTensor<float>(audio, [1, audio.Length])),
+                NamedOnnxValue.CreateFromTensor("min_length", new DenseTensor<int>(new int[] { modelConfig.min_length }, [1])),
 
-                NamedOnnxValue.CreateFromTensor("num_beams", new DenseTensor<int>(new int[] { modelConfig.num_beams }, new int[] { 1 })),
-                NamedOnnxValue.CreateFromTensor("num_return_sequences", new DenseTensor<int>(new int[] { modelConfig.num_return_sequences }, new int[] { 1 })),
-                NamedOnnxValue.CreateFromTensor("length_penalty", new DenseTensor<float>(new float[] { modelConfig.length_penalty }, new int[] { 1 })),
-                NamedOnnxValue.CreateFromTensor("repetition_penalty", new DenseTensor<float>(new float[] { modelConfig.repetition_penalty }, new int[] { 1 })),
+                NamedOnnxValue.CreateFromTensor("num_beams", new DenseTensor<int>(new int[] { modelConfig.num_beams }, [1])),
+                NamedOnnxValue.CreateFromTensor("num_return_sequences", new DenseTensor<int>(new int[] { modelConfig.num_return_sequences }, [1])),
+                NamedOnnxValue.CreateFromTensor("length_penalty", new DenseTensor<float>(new float[] { modelConfig.length_penalty }, [1])),
+                NamedOnnxValue.CreateFromTensor("repetition_penalty", new DenseTensor<float>(new float[] { modelConfig.repetition_penalty }, [1])),
+                NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, [1])),
                 };
 
+
+            if (inputNames.Contains("logits_processor", StringComparer.OrdinalIgnoreCase))
+            {
+                input.Add(NamedOnnxValue.CreateFromTensor("logits_processor", new DenseTensor<int>(new int[] { 1 }, [1])));
+            }
 
             int[]? inputParameters = null;
 
@@ -202,7 +208,7 @@ namespace AudioNoteTranscription.Whisper
                     50258,
                     language,
                     50363,     //nospeech
-                    50365,     //<|0.00|>
+                    50364,     //<|0.00|>
                 ];
 
                 if (Translate)
@@ -217,8 +223,7 @@ namespace AudioNoteTranscription.Whisper
 
             Array.Sort(inputParameters);
 
-            input.Add(NamedOnnxValue.CreateFromTensor("decoder_input_ids", new DenseTensor<int>(inputParameters, new int[] { 1, inputParameters.Length })));
-            input.Add(NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, new int[] { 1 })));
+            input.Add(NamedOnnxValue.CreateFromTensor("decoder_input_ids", new DenseTensor<int>(inputParameters, [1, inputParameters.Length])));
 
             return input;
         }
@@ -286,8 +291,6 @@ namespace AudioNoteTranscription.Whisper
 
                 if (!waitingList.IsEmpty)
                 {
-                    inProgress = true;
-
                     if (waitingList.TryPeek(out AudioDataEventArgs e))
                     {
                         float[] audioData = null;
@@ -407,7 +410,6 @@ namespace AudioNoteTranscription.Whisper
             return fullText;
         }
 
-        private bool inProgress = false;
         private ConcurrentQueue<AudioDataEventArgs> waitingList = new();
         private Capture? capture;
         private bool disposedValue;
@@ -422,7 +424,8 @@ namespace AudioNoteTranscription.Whisper
             StringBuilder stringBuilder = new();
             foreach (var audio in pcmAudioData.ChunkViaMemory(480000))
             {
-                var input = CreateOnnxWhisperModelInput(config, audio);
+
+                var input = CreateOnnxWhisperModelInput(config, audio, session.InputNames);
                 try
                 {
                     var result = session.Run(input, ["str"], runOptions);
@@ -444,7 +447,7 @@ namespace AudioNoteTranscription.Whisper
             StringBuilder stringBuilder = new();
             foreach (var audio in pcmAudioData.ChunkViaMemory(480000))
             {
-                var input = CreateOnnxWhisperModelInput(config, audio);
+                var input = CreateOnnxWhisperModelInput(config, audio, session.InputNames);
                 var result = session.Run(input, ["str"], runOptions);
 
                 var recognizedText = SplitToTimeStamps((result.FirstOrDefault()?.Value as IEnumerable<string>)?.First() ?? string.Empty, startTime);
