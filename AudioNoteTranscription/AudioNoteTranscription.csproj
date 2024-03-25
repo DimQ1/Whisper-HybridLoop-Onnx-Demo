@@ -20,7 +20,6 @@
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Extensions" Version="0.10.0" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.17.1" />
-		<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Windows" Version="1.17.1" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.17.1" />
 		<PackageReference Include="NAudio" Version="2.2.1" />
 		<PackageReference Include="NAudio.Core" Version="2.2.1" />

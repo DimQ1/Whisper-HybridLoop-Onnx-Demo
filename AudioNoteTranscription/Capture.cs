@@ -65,7 +65,7 @@ namespace AudioNoteTranscription
         {
             this.waveSourceMic = new WaveInEvent();
             waveSourceMic.WaveFormat = wasapiLoopbackСapture.WaveFormat;
-            InitMicAudioBuffer(waveSourceMic);
+
             InitWaveInCapture(waveSourceMic);
 
             return this.waveSourceMic;
@@ -82,7 +82,7 @@ namespace AudioNoteTranscription
 
         private void InitCapture(WasapiCapture capture)
         {
-            InitLoopbackAudioBuffer(capture);
+            bufferedLoopbackWaveProvider = InitLoopbackAudioBuffer(capture);
 
             capture.DataAvailable += delegate (object? s, WaveInEventArgs a)
             {
@@ -95,24 +95,30 @@ namespace AudioNoteTranscription
             };
         }
 
-        private void InitLoopbackAudioBuffer(WasapiCapture capture)
+        private static BufferedWaveProvider InitLoopbackAudioBuffer(WasapiCapture capture)
         {
-            bufferedLoopbackWaveProvider = new BufferedWaveProvider(capture.WaveFormat);
-            bufferedLoopbackWaveProvider.DiscardOnBufferOverflow = true;
-            bufferedLoopbackWaveProvider.ReadFully = false;
-            bufferedLoopbackWaveProvider.BufferDuration = TimeSpan.FromSeconds(60);
+            return new BufferedWaveProvider(capture.WaveFormat)
+            {
+                DiscardOnBufferOverflow = true,
+                ReadFully = false,
+                BufferDuration = TimeSpan.FromSeconds(60)
+            };
         }
 
-        private void InitMicAudioBuffer(WaveInEvent capture)
+        private static BufferedWaveProvider InitMicAudioBuffer(WaveInEvent capture)
         {
-            bufferedMicWaveProvider = new BufferedWaveProvider(capture.WaveFormat);
-            bufferedMicWaveProvider.DiscardOnBufferOverflow = true;
-            bufferedMicWaveProvider.ReadFully = false;
-            bufferedMicWaveProvider.BufferDuration = TimeSpan.FromSeconds(60);
+            return new BufferedWaveProvider(capture.WaveFormat)
+            {
+                DiscardOnBufferOverflow = true,
+                ReadFully = false,
+                BufferDuration = TimeSpan.FromSeconds(60)
+            };
         }
 
         private void InitWaveInCapture(WaveInEvent capture)
         {
+            bufferedMicWaveProvider = InitMicAudioBuffer(waveSourceMic);
+
             capture.DataAvailable += delegate (object? s, WaveInEventArgs a)
             {
                 bufferedMicWaveProvider.AddSamples(a.Buffer, 0, a.BytesRecorded);
@@ -135,7 +141,7 @@ namespace AudioNoteTranscription
 
                 var bufferedTime = bufferedLoopBackTime > bufferedMicTime ? bufferedLoopBackTime : bufferedMicTime;
 
-                var mixer = new MixingSampleProvider(new[] { bufferedLoopbackWaveProvider.ToSampleProvider(), bufferedMicWaveProvider.ToSampleProvider() });
+                var mixer = new MixingSampleProvider([bufferedLoopbackWaveProvider.ToSampleProvider(), bufferedMicWaveProvider.ToSampleProvider()]);
 
                 var waveFormat = new WdlResamplingSampleProvider(mixer.ToMono(), 16000);
 
