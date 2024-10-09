@@ -10,7 +10,6 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using NReco.VideoConverter;
 using SileroVad;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AudioNoteTranscription.Whisper
 {
@@ -163,12 +162,13 @@ namespace AudioNoteTranscription.Whisper
             var input = new List<NamedOnnxValue> {
                 NamedOnnxValue.CreateFromTensor("audio_pcm", new DenseTensor<float>(audio, [1, audio.Length])),
                 NamedOnnxValue.CreateFromTensor("min_length", new DenseTensor<int>(new int[] { modelConfig.min_length }, [1])),
+                NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, [1])),
 
                 NamedOnnxValue.CreateFromTensor("num_beams", new DenseTensor<int>(new int[] { modelConfig.num_beams }, [1])),
                 NamedOnnxValue.CreateFromTensor("num_return_sequences", new DenseTensor<int>(new int[] { modelConfig.num_return_sequences }, [1])),
                 NamedOnnxValue.CreateFromTensor("length_penalty", new DenseTensor<float>(new float[] { modelConfig.length_penalty }, [1])),
                 NamedOnnxValue.CreateFromTensor("repetition_penalty", new DenseTensor<float>(new float[] { modelConfig.repetition_penalty }, [1])),
-                NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, [1])),
+                
                 };
 
 
@@ -252,14 +252,6 @@ namespace AudioNoteTranscription.Whisper
 
         public string RunRealtime(WhisperConfig config, bool isMic, bool isLoopback)
         {
-
-            // Run inference
-            using var runOptions = new RunOptions();
-
-            // Set EP
-            using var sessionOptions = config.GetSessionOptionsForEp();
-            using var session = new InferenceSession(config.WhisperOnnxPath, sessionOptions);
-
             capture?.Start();
 
             if (isLoopback)
@@ -271,6 +263,13 @@ namespace AudioNoteTranscription.Whisper
             {
                 capture?.StartMic();
             }
+
+            // Run inference
+            using var runOptions = new RunOptions();
+
+            // Set EP
+            using var sessionOptions = config.GetSessionOptionsForEp();
+            using var session = new InferenceSession(config.WhisperOnnxPath, sessionOptions);
 
             var N_SAMPLES = 480000;
             float[] audioDataArray = new float[N_SAMPLES];
