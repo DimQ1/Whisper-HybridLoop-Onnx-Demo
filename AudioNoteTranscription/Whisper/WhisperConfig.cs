@@ -59,26 +59,30 @@ namespace AudioNoteTranscription.Whisper
 
             switch (ExecutionProviderTarget)
             {
-                //case ExecutionProvider.DirectML:
-                //    sessionOptions.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-                //    //sessionOptions.EnableMemoryPattern = false;
-                //    sessionOptions.AppendExecutionProvider_DML(DeviceId);
-                //    //sessionOptions.AppendExecutionProvider_CPU();
-                //    break;
+                case ExecutionProvider.DirectML:
+                    //sessionOptions.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+                    //sessionOptions.EnableMemoryPattern = false;
+                    sessionOptions.AppendExecutionProvider_DML(DeviceId);
+                    //sessionOptions.AppendExecutionProvider_CPU();
+                    break;
                 case ExecutionProvider.Cpu:
                     sessionOptions.AppendExecutionProvider_CPU();
+                    sessionOptions.RegisterOrtExtensions();
+                    sessionOptions.EnableCpuMemArena = true;
+                    sessionOptions.ExecutionMode = ExecutionMode.ORT_PARALLEL;
                     break;
                 case ExecutionProvider.Cuda:
                     sessionOptions.AppendExecutionProvider_CUDA();
+                    sessionOptions.RegisterOrtExtensions();
+                    sessionOptions.EnableCpuMemArena = true;
+                    sessionOptions.ExecutionMode = ExecutionMode.ORT_PARALLEL;
                     break;
                 default:
                     sessionOptions.AppendExecutionProvider_CPU();
                     break;
             }
             sessionOptions.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-            sessionOptions.RegisterOrtExtensions();
-            sessionOptions.EnableCpuMemArena = true;
-            sessionOptions.ExecutionMode = ExecutionMode.ORT_PARALLEL;
+
             return sessionOptions;
 
         }

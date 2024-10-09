@@ -53,5 +53,6 @@ namespace AudioNoteTranscription.Extensions
     {
         Cuda = 1,
         Cpu = 2,
+        DirectML = 3,
     }
 }
