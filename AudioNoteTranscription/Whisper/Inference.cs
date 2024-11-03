@@ -179,7 +179,7 @@ namespace AudioNoteTranscription.Whisper
 
             int[]? inputParameters = null;
 
-            if (string.Equals(modelConfig.NameOrPath, "openai/whisper-large-v3", StringComparison.OrdinalIgnoreCase))
+            if (modelConfig.NameOrPath.Contains("whisper-large-v3", StringComparison.OrdinalIgnoreCase))
             {
                 //50365 - 51865
 
