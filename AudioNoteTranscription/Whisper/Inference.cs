@@ -403,7 +403,7 @@ namespace AudioNoteTranscription.Whisper
 
             fullText = regex.Replace(fullText, delegate (Match match)
             {
-                var time = float.Parse(match.Groups["time"].Value) + startTime;
+                var time = (float.TryParse(match.Groups["time"].Value, out float timeParced) ? timeParced : 0f) + startTime;
                 return "\r\n" + TimeSpan.FromSeconds(time) + "\r\n";
             });
             return fullText;
