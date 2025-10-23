@@ -6,9 +6,9 @@ namespace AudioNoteTranscription.Common
     public class CommandBase<T> : ICommand where T : class
     {
         private readonly Action<T?> _execute;
-        private readonly Predicate<T?> _canExecute;
+        private readonly Predicate<T?>? _canExecute;
 
-        public CommandBase(Action<T?> execute, Predicate<T?> canExecute = null)
+        public CommandBase(Action<T?> execute, Predicate<T?>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;

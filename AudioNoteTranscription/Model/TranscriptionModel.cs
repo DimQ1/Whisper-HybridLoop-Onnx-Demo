@@ -12,7 +12,7 @@ namespace AudioNoteTranscription.Model
     {
         private readonly string DESTINATION_FOLDER = "Transcriptions";
 
-        public event EventHandler MessageRecognized;
+        public event EventHandler<MessageRecognizedEventArgs>? MessageRecognized;
 
         private Inference? inference = null;
 
@@ -58,7 +58,8 @@ namespace AudioNoteTranscription.Model
 
         private void Inference_MessageRecognized(object? sender, EventArgs e)
         {
-            OnMessageRecognized(e as MessageRecognizedEventArgs);
+            if (e is MessageRecognizedEventArgs args)
+                OnMessageRecognized(args);
         }
 
         // Simple file storage for the transcribed note, this can be elaborated with different formats etc.

@@ -2,7 +2,7 @@
 {
     public class Config
     {
-        public string type { get; set; }
-        public ModelConfiguration config { get; set; }
+        public string? type { get; set; }
+        public ModelConfiguration? config { get; set; }
     }
 }

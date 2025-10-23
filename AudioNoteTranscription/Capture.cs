@@ -9,7 +9,7 @@ namespace AudioNoteTranscription
 {
     public class AudioDataEventArgs : EventArgs
     {
-        public float[] AudioData { get; set; }
+        public float[]? AudioData { get; set; }
     }
 
     public class Capture : IDisposable
@@ -22,9 +22,9 @@ namespace AudioNoteTranscription
         private BufferedWaveProvider? bufferedMicWaveProvider;
 
         private bool inProgress = false;
-        private WaveInEvent waveSourceMic;
+        private WaveInEvent? waveSourceMic;
         private bool disposedValue;
-        private Timer timer;
+        private Timer? timer;
 
         public Capture()
         {
@@ -117,7 +117,7 @@ namespace AudioNoteTranscription
 
         private void InitWaveInCapture(WaveInEvent capture)
         {
-            bufferedMicWaveProvider = InitMicAudioBuffer(waveSourceMic);
+            bufferedMicWaveProvider = InitMicAudioBuffer(waveSourceMic!);
 
             capture.DataAvailable += delegate (object? s, WaveInEventArgs a)
             {
@@ -173,8 +173,11 @@ namespace AudioNoteTranscription
             {
                 if (disposing)
                 {
-                    timer.Stop();
-                    timer.Dispose();
+                    if (timer != null)
+                    {
+                        timer.Stop();
+                        timer.Dispose();
+                    }
                     wasapiLoopbackСapture.StopRecording();
                     wasapiLoopbackСapture?.Dispose();
                     bufferedLoopbackWaveProvider?.ClearBuffer();

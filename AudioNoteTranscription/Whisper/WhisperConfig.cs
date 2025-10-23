@@ -20,7 +20,7 @@ namespace AudioNoteTranscription.Whisper
 
         public int SampleRate { get; private set; } = 16000;
 
-        public DenseTensor<float> Audio { get; set; }
+        public DenseTensor<float>? Audio { get; set; }
         public int DeviceId { get; private set; } = 0;
 
         public WhisperConfig(string modelPath, string audioPath, string language, ExecutionProvider executionProviderTarget = ExecutionProvider.Cpu)

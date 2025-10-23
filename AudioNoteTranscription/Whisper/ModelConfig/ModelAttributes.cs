@@ -17,7 +17,7 @@ namespace AudioNoteTranscription.Whisper.ModelConfig
         public double dropout { get; set; }
         public double attention_dropout { get; set; }
         public double activation_dropout { get; set; }
-        public string activation_function { get; set; }
+        public string? activation_function { get; set; }
         public double init_std { get; set; }
         public double encoder_layerdrop { get; set; }
         public double decoder_layerdrop { get; set; }
@@ -40,13 +40,13 @@ namespace AudioNoteTranscription.Whisper.ModelConfig
         public bool output_hidden_states { get; set; }
         public bool output_attentions { get; set; }
         public bool torchscript { get; set; }
-        public string torch_dtype { get; set; }
+        public string? torch_dtype { get; set; }
         public bool use_bfloat16 { get; set; }
         public bool tf_legacy_loss { get; set; }
         public bool tie_word_embeddings { get; set; }
         public bool is_encoder_decoder { get; set; }
         public bool is_decoder { get; set; }
-        public object cross_attention_hidden_size { get; set; }
+        public object? cross_attention_hidden_size { get; set; }
         public bool add_cross_attention { get; set; }
         public bool tie_encoder_decoder { get; set; }
         public int max_length { get; set; }
@@ -64,34 +64,34 @@ namespace AudioNoteTranscription.Whisper.ModelConfig
         public float length_penalty { get; set; }
         public int no_repeat_ngram_size { get; set; }
         public int encoder_no_repeat_ngram_size { get; set; }
-        public object bad_words_ids { get; set; }
+        public object? bad_words_ids { get; set; }
         public int num_return_sequences { get; set; }
         public int chunk_size_feed_forward { get; set; }
         public bool output_scores { get; set; }
         public bool return_dict_in_generate { get; set; }
-        public object forced_bos_token_id { get; set; }
-        public object forced_eos_token_id { get; set; }
+        public object? forced_bos_token_id { get; set; }
+        public object? forced_eos_token_id { get; set; }
         public bool remove_invalid_values { get; set; }
-        public object exponential_decay_length_penalty { get; set; }
-        public List<int> suppress_tokens { get; set; }
-        public List<int> begin_suppress_tokens { get; set; }
-        public List<string> architectures { get; set; }
-        public object finetuning_task { get; set; }
-        public object tokenizer_class { get; set; }
-        public object prefix { get; set; }
+        public object? exponential_decay_length_penalty { get; set; }
+        public List<int>? suppress_tokens { get; set; }
+        public List<int>? begin_suppress_tokens { get; set; }
+        public List<string>? architectures { get; set; }
+        public object? finetuning_task { get; set; }
+        public object? tokenizer_class { get; set; }
+        public object? prefix { get; set; }
         public int bos_token_id { get; set; }
         public int pad_token_id { get; set; }
         public int eos_token_id { get; set; }
-        public object sep_token_id { get; set; }
+        public object? sep_token_id { get; set; }
         public int decoder_start_token_id { get; set; }
-        public object task_specific_params { get; set; }
-        public object problem_type { get; set; }
-        public string transformers_version { get; set; }
-        public List<List<int>> forced_decoder_ids { get; set; }
-        public string model_type { get; set; }
+        public object? task_specific_params { get; set; }
+        public object? problem_type { get; set; }
+        public string? transformers_version { get; set; }
+        public List<List<int>>? forced_decoder_ids { get; set; }
+        public string? model_type { get; set; }
 
         [JsonPropertyName("_name_or_path")]
-        public string NameOrPath { get; set; }
+        public string? NameOrPath { get; set; }
     }
 
 

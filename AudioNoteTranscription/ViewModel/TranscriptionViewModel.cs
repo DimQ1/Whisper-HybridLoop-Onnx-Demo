@@ -10,14 +10,18 @@ namespace AudioNoteTranscription.ViewModel
 {
     public class TranscriptionViewModel : ModelBase
     {
-        WhisperConfig whisperConfig;
+        WhisperConfig? whisperConfig;
         bool redy = true;
         public TranscriptionViewModel(TranscriptionModel model)
         {
             var modelPath = Path.Combine(Directory.GetCurrentDirectory(), "MlModels");
             if (Directory.Exists(modelPath))
             {
-                _modelPath = Directory.GetDirectories(modelPath).FirstOrDefault();
+                _modelPath = Directory.GetDirectories(modelPath).FirstOrDefault() ?? string.Empty;
+            }
+            else
+            {
+                _modelPath = string.Empty;
             }
 
             _model = model;
@@ -46,7 +50,7 @@ namespace AudioNoteTranscription.ViewModel
 
             _loopbackCommand = new CommandBase<object>((state) =>
             {
-                if (state != null && Convert.ToBoolean(state) == true)
+                if (state is bool b && b)
                 {
                     model.StartLoopback();
                 }
@@ -58,7 +62,7 @@ namespace AudioNoteTranscription.ViewModel
 
             _micCommand = new CommandBase<object>((state) =>
             {
-                if (state != null && Convert.ToBoolean(state) == true)
+                if (state is bool b && b)
                 {
                     model.StartMic();
 
@@ -155,7 +159,7 @@ namespace AudioNoteTranscription.ViewModel
         public string[] Languages => Inference.ALL_LANGUAGE_TOKENS.Keys.ToArray();
 
 
-        private string _modelPath;
+        private string _modelPath = string.Empty;
         public string ModelPath
         {
             get => _modelPath;

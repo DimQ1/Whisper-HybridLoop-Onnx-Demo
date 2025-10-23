@@ -5,10 +5,10 @@ namespace AudioNoteTranscription.Extensions
 {
     public class EnumBindingSourceExtension : MarkupExtension
     {
-        private Type _enumType;
+        private Type? _enumType;
         public Type EnumType
         {
-            get { return this._enumType; }
+            get { return this._enumType!; }
             set
             {
                 if (value != this._enumType)

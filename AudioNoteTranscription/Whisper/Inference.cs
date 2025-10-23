@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ namespace AudioNoteTranscription.Whisper
 {
     public class MessageRecognizedEventArgs : EventArgs
     {
-        public string RecognizedText { get; set; }
+        public string? RecognizedText { get; set; }
     }
     public partial class Inference : IDisposable
     {
@@ -157,18 +158,18 @@ namespace AudioNoteTranscription.Whisper
 
             var language = ALL_LANGUAGE_TOKENS[config.Language]; /*ru*/
 
-            var modelConfig = config.ModelConfig.config.model_attributes;
+            var modelConfig = config.ModelConfig.config!.model_attributes!;
 
             var input = new List<NamedOnnxValue> {
                 NamedOnnxValue.CreateFromTensor("audio_pcm", new DenseTensor<float>(audio, [1, audio.Length])),
-                NamedOnnxValue.CreateFromTensor("min_length", new DenseTensor<int>(new int[] { modelConfig.min_length }, [1])),
+                NamedOnnxValue.CreateFromTensor("min_length", new DenseTensor<int>(new int[] { modelConfig!.min_length }, [1])),
                 NamedOnnxValue.CreateFromTensor("max_length", new DenseTensor<int>(new int[] { modelConfig.max_length }, [1])),
 
-                NamedOnnxValue.CreateFromTensor("num_beams", new DenseTensor<int>(new int[] { modelConfig.num_beams }, [1])),
+                NamedOnnxValue.CreateFromTensor("num_beams", new DenseTensor<int>(new int[] { modelConfig!.num_beams }, [1])),
                 NamedOnnxValue.CreateFromTensor("num_return_sequences", new DenseTensor<int>(new int[] { modelConfig.num_return_sequences }, [1])),
-                NamedOnnxValue.CreateFromTensor("length_penalty", new DenseTensor<float>(new float[] { modelConfig.length_penalty }, [1])),
+                NamedOnnxValue.CreateFromTensor("length_penalty", new DenseTensor<float>(new float[] { modelConfig!.length_penalty }, [1])),
                 NamedOnnxValue.CreateFromTensor("repetition_penalty", new DenseTensor<float>(new float[] { modelConfig.repetition_penalty }, [1])),
-                
+
                 };
 
 
@@ -179,7 +180,7 @@ namespace AudioNoteTranscription.Whisper
 
             int[]? inputParameters = null;
 
-            if (modelConfig.NameOrPath.Contains("whisper-large-v3", StringComparison.OrdinalIgnoreCase))
+            if (modelConfig!.NameOrPath!.Contains("whisper-large-v3", StringComparison.OrdinalIgnoreCase))
             {
                 //50365 - 51865
 
@@ -292,17 +293,17 @@ namespace AudioNoteTranscription.Whisper
                 {
                     if (waitingList.TryPeek(out AudioDataEventArgs e))
                     {
-                        float[] audioData = null;
+                        float[] audioData = new float[0];
 
                         while (waitingList.TryDequeue(out AudioDataEventArgs audioChank))
                         {
-                            if (audioData == null)
+                            if (audioData.Length == 0)
                             {
-                                audioData = audioChank.AudioData;
+                                audioData = audioChank.AudioData!;
                             }
                             else
                             {
-                                audioData = MergeUsingBlockCopy(audioData, audioChank.AudioData);
+                                audioData = MergeUsingBlockCopy(audioData, audioChank.AudioData!);
                             }
 
                         }
@@ -403,7 +404,7 @@ namespace AudioNoteTranscription.Whisper
 
             fullText = regex.Replace(fullText, delegate (Match match)
             {
-                var time = float.Parse(match.Groups["time"].Value) + startTime;
+                var time = (float.TryParse(match.Groups["time"].Value, out var timeParced) ? timeParced : 0f) + startTime;
                 return "\r\n" + TimeSpan.FromSeconds(time) + "\r\n";
             });
             return fullText;
@@ -431,7 +432,7 @@ namespace AudioNoteTranscription.Whisper
 
                     stringBuilder.Append((result.FirstOrDefault()?.Value as IEnumerable<string>)?.First() ?? string.Empty);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 
                 }
